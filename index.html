@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TeknoLink - Gestão de OCs, Materiais e Orçamentos</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; }
+  body { background-color: #f3f2ef; color: #191919; min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* Barra Superior estilo LinkedIn */
+  .navbar { background: #ffffff; border-bottom: 1px solid #e0dfdc; position: sticky; top: 0; z-index: 100; padding: 10px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .nav-content { max-width: 1180px; margin: auto; display: flex; align-items: center; justify-content: space-between; gap: 15px; flex-wrap: wrap; }
+  .nav-left { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 280px; }
+  .nav-logo { height: 42px; border-radius: 6px; }
+  .search-box { background: #edf3f8; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 14px; display: flex; align-items: center; flex: 1; max-width: 440px; }
+  .search-box input { border: none; background: transparent; outline: none; font-size: 14px; width: 100%; color: #191919; }
+  .nav-menu { display: flex; gap: 10px; align-items: center; }
+  .nav-btn { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 7px 14px; font-size: 13px; font-weight: 700; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s; }
+  .nav-btn:hover { background: #e2e8f0; }
+  .nav-btn.active { background: #007A33; color: #ffffff; border-color: #007A33; }
+
+  /* Grid Principal */
+  .main-grid { max-width: 1180px; width: 100%; margin: 24px auto; padding: 0 16px; display: grid; grid-template-columns: 240px 1fr 270px; gap: 22px; flex: 1; }
+  @media (max-width: 960px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .sidebar-right { display: none; }
+  }
+
+  .card { background: #ffffff; border-radius: 10px; border: 1px solid #e0dfdc; overflow: hidden; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+
+  /* Perfil Esquerda */
+  .profile-banner { height: 64px; background: linear-gradient(135deg, #007A33 0%, #004d20 100%); }
+  .profile-info { text-align: center; padding: 0 16px 16px; }
+  .profile-avatar { width: 72px; height: 72px; border-radius: 50%; background: #007A33; color: #FACC15; font-size: 26px; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: -36px auto 10px; border: 3px solid #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+  .profile-name { font-size: 16px; font-weight: 700; color: #191919; }
+  .profile-role { font-size: 12px; color: #666666; margin-top: 4px; line-height: 1.4; }
+  .profile-stats { border-top: 1px solid #e0dfdc; padding: 12px 16px; font-size: 12px; color: #475569; }
+  .stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; }
+  .stat-row:last-child { margin-bottom: 0; }
+  .badge-pend { background: #fef3c7; color: #b45309; padding: 2px 8px; border-radius: 10px; font-weight: 700; }
+  .badge-comp { background: #dcfce7; color: #005A25; padding: 2px 8px; border-radius: 10px; font-weight: 700; }
+
+  /* Formulário Central */
+  .post-box { padding: 20px; border-top: 5px solid #007A33; }
+  .post-box-title { font-size: 16px; font-weight: 800; color: #005A25; margin-bottom: 14px; }
+  
+  .step-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px; margin-bottom: 14px; }
+  .step-title { font-size: 12px; font-weight: 800; color: #0f172a; text-transform: uppercase; margin-bottom: 10px; display: block; }
+  
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .grid-mat-top { display: grid; grid-template-columns: 2fr 1fr 2fr; gap: 8px; margin-bottom: 8px; }
+  .grid-mat-bot { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; }
+  @media (max-width: 700px) {
+    .grid-3, .grid-mat-top, .grid-mat-bot { grid-template-columns: 1fr; }
+  }
+
+  .field-group { display: flex; flex-direction: column; gap: 4px; }
+  .field-group label { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; }
+  .input-ln { width: 100%; padding: 9px 11px; border: 1px solid #94a3b8; border-radius: 6px; font-size: 14px; color: #191919; background: #ffffff; }
+  .input-ln:focus { outline: none; border-color: #007A33; box-shadow: 0 0 0 3px rgba(0, 122, 51, 0.15); }
+
+  /* Botão de Upload de Imagem de Orçamento */
+  .file-upload-box { display: flex; align-items: center; gap: 10px; background: #ffffff; border: 1px dashed #007A33; border-radius: 6px; padding: 7px 12px; cursor: pointer; transition: background 0.2s; }
+  .file-upload-box:hover { background: #dcfce7; }
+  .file-upload-btn { background: #007A33; color: #ffffff; font-size: 12px; font-weight: 700; padding: 5px 10px; border-radius: 4px; white-space: nowrap; }
+  .file-upload-name { font-size: 12px; color: #475569; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+
+  .btn-add-item { background: #0f172a; color: #FACC15; border: none; padding: 10px 16px; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; height: 40px; white-space: nowrap; }
+  .btn-add-item:hover { background: #1e293b; }
+
+  /* Prévia dos materiais */
+  .preview-lista { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+  .preview-item { background: #ffffff; border: 1px solid #cbd5e1; border-left: 4px solid #007A33; padding: 8px 12px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; gap: 10px; }
+  .preview-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .preview-thumb { width: 38px; height: 38px; object-fit: cover; border-radius: 4px; border: 1px solid #cbd5e1; }
+  .badge-orc-ok { background: #dcfce7; color: #005A25; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px; }
+  .btn-rem-prev { background: #fee2e2; color: #dc2626; border: none; padding: 4px 8px; border-radius: 4px; font-weight: 700; cursor: pointer; font-size: 11px; }
+
+  .btn-publish { width: 100%; background: #007A33; color: #ffffff; border: none; padding: 13px; border-radius: 8px; font-weight: 800; font-size: 15px; cursor: pointer; transition: background 0.2s; }
+  .btn-publish:hover { background: #005A25; }
+
+  /* Card da OC Salva no Feed */
+  .oc-card { padding: 18px; }
+  .oc-card.status-pendente { border-left: 6px solid #f59e0b; }
+  .oc-card.status-comprado { border-left: 6px solid #007A33; }
+
+  .oc-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; }
+  .oc-badges { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .tag-oc { background: #0f172a; color: #FACC15; font-size: 13px; font-weight: 800; padding: 5px 12px; border-radius: 6px; }
+  .tag-pedido { background: #e2e8f0; color: #1e293b; font-size: 13px; font-weight: 700; padding: 5px 12px; border-radius: 6px; }
+  .tag-data { font-size: 12px; color: #64748b; }
+
+  .oc-obs { background: #f8fafc; padding: 8px 12px; border-radius: 6px; font-size: 13px; color: #334155; margin-bottom: 12px; border: 1px dashed #cbd5e1; }
+
+  .status-pill { font-size: 12px; font-weight: 800; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; }
+  .pill-pendente { background: #fef3c7; color: #b45309; border: 1px solid #fcd34d; }
+  .pill-comprado { background: #dcfce7; color: #005A25; border: 1px solid #86efac; }
+
+  /* Lista de Materiais dentro do Card */
+  .lista-materiais-oc { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+  .item-mat-row { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .item-mat-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 220px; }
+  .item-mat-thumb { width: 56px; height: 56px; object-fit: cover; border-radius: 6px; border: 2px solid #007A33; cursor: pointer; transition: transform 0.15s; }
+  .item-mat-thumb:hover { transform: scale(1.06); }
+  .item-mat-info { flex: 1; }
+  .item-mat-nome { font-size: 14px; font-weight: 700; color: #191919; }
+  .item-mat-qtd { display: inline-block; background: #dbeafe; color: #1e40af; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; margin-top: 4px; }
+  .item-mat-url { font-size: 12px; color: #2563eb; margin-top: 4px; word-break: break-all; }
+
+  .item-mat-btns { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .btn-ver-orc { background: #0f172a; color: #FACC15; border: none; font-size: 12px; font-weight: 700; padding: 7px 11px; border-radius: 6px; cursor: pointer; }
+  .btn-ver-orc:hover { background: #1e293b; }
+  .btn-abrir { background: #007A33; color: #fff; text-decoration: none; font-size: 12px; font-weight: 700; padding: 7px 12px; border-radius: 6px; }
+  .btn-abrir:hover { background: #005A25; }
+  .btn-copiar { background: #ffffff; border: 1px solid #94a3b8; color: #334155; font-size: 12px; font-weight: 600; padding: 7px 10px; border-radius: 6px; cursor: pointer; }
+  .btn-copiar:hover { background: #f1f5f9; }
+
+  /* Rodapé do Card da OC */
+  .oc-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid #e0dfdc; gap: 10px; flex-wrap: wrap; }
+  .btn-status-toggle { border: none; font-weight: 700; font-size: 13px; padding: 9px 16px; border-radius: 6px; cursor: pointer; }
+  .btn-to-comprado { background: #007A33; color: #fff; }
+  .btn-to-comprado:hover { background: #005A25; }
+  .btn-to-pendente { background: #f59e0b; color: #fff; }
+  .btn-to-pendente:hover { background: #d97706; }
+  .btn-excluir-oc { background: transparent; border: none; color: #dc2626; font-size: 12px; font-weight: 700; cursor: pointer; padding: 6px 10px; }
+  .btn-excluir-oc:hover { background: #fee2e2; border-radius: 6px; }
+
+  /* Coluna Direita */
+  .widget { padding: 16px; }
+  .widget h3 { font-size: 15px; font-weight: 700; color: #191919; margin-bottom: 8px; }
+  .widget p { font-size: 12px; color: #64748b; line-height: 1.45; margin-bottom: 12px; }
+  .btn-side { width: 100%; padding: 9px 12px; border-radius: 6px; font-weight: 700; font-size: 12px; cursor: pointer; margin-bottom: 8px; text-align: center; display: block; }
+  .btn-side-green { background: #007A33; color: #fff; border: none; }
+  .btn-side-outline { background: #f8fafc; color: #007A33; border: 1px solid #007A33; }
+
+  /* Modal de Visualização de Orçamento (Imagem Ampliada) */
+  .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); z-index: 1000; justify-content: center; align-items: center; padding: 20px; }
+  .modal-content { background: #ffffff; border-radius: 12px; max-width: 820px; width: 100%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+  .modal-header { background: #007A33; color: #ffffff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; }
+  .modal-header h3 { font-size: 16px; font-weight: 700; }
+  .modal-close { background: rgba(255,255,255,0.2); border: none; color: #ffffff; font-size: 18px; font-weight: 700; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; }
+  .modal-close:hover { background: rgba(255,255,255,0.35); }
+  .modal-body { padding: 20px; overflow: auto; text-align: center; background: #f8fafc; flex: 1; }
+  .modal-body img { max-width: 100%; max-height: 68vh; border-radius: 6px; border: 1px solid #cbd5e1; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+  .modal-footer { padding: 12px 20px; background: #ffffff; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 10px; }
+  .btn-download-img { background: #007A33; color: #fff; text-decoration: none; font-size: 13px; font-weight: 700; padding: 8px 16px; border-radius: 6px; }
+
+  /* Footer Oficial */
+  .footer { background: #ffffff; border-top: 1px solid #e0dfdc; padding: 18px 20px; text-align: center; font-size: 13px; color: #666666; margin-top: auto; }
+  .footer-inner { max-width: 1180px; margin: auto; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .footer strong { color: #007A33; }
+  .toast { position: fixed; bottom: 24px; right: 24px; background: #007A33; color: #fff; padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); display: none; z-index: 999; }
+
+  body:not(.autenticado) > header, body:not(.autenticado) > main, body:not(.autenticado) > footer, body:not(.autenticado) > #toast, body:not(.autenticado) > #admin-modal { display:none !important; }
+  #login-screen { display:none; position:fixed; inset:0; z-index:5000; background:#f3f2ef; align-items:center; justify-content:center; padding:20px; }
+  body:not(.autenticado) #login-screen { display:flex; }
+  .login-card { width:min(420px,100%); background:#fff; border:1px solid #e0dfdc; border-radius:14px; padding:30px; box-shadow:0 12px 35px rgba(0,0,0,.12); }
+  .login-card h1 { color:#005A25; font-size:23px; margin-bottom:8px; }
+  .login-card p { color:#64748b; font-size:13px; margin-bottom:22px; line-height:1.5; }
+  .login-card .field-group { margin-bottom:14px; }
+  .login-card button { width:100%; border:0; background:#007A33; color:#fff; padding:12px; border-radius:7px; font-weight:800; cursor:pointer; }
+  #login-error { color:#b91c1c; font-size:12px; min-height:18px; margin:10px 0; }
+  .auth-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .auth-user { font-size:12px; color:#475569; font-weight:700; }
+  .admin-modal { display:none; position:fixed; inset:0; z-index:3000; background:rgba(15,23,42,.65); align-items:center; justify-content:center; padding:16px; }
+  .admin-modal.open { display:flex; }
+  .admin-box { background:#fff; width:min(620px,100%); max-height:90vh; overflow:auto; border-radius:12px; padding:22px; }
+  .admin-box h2 { color:#005A25; margin-bottom:14px; }
+  .admin-form { display:grid; grid-template-columns:1fr 1fr auto; gap:8px; align-items:end; margin:14px 0 18px; }
+  .admin-user-row { display:flex; justify-content:space-between; align-items:center; gap:12px; border-top:1px solid #e2e8f0; padding:12px 0; font-size:13px; }
+  .admin-user-row button { border:1px solid #cbd5e1; background:#f8fafc; padding:6px 10px; border-radius:6px; cursor:pointer; }
+  .admin-close { float:right; border:0; background:#e2e8f0; border-radius:6px; padding:6px 10px; cursor:pointer; }
+  @media(max-width:650px){ .admin-form{grid-template-columns:1fr;} .auth-user{display:none;} }
+
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <form class="login-card" onsubmit="fazerLogin(event)">
+    <h1>TeknoLink</h1>
+    <p>Entre com seu usuário e senha para acessar o Portal de OCs, Materiais e Orçamentos.</p>
+    <div class="field-group"><label for="login-usuario">Usuário</label><input id="login-usuario" class="input-ln" autocomplete="username" required></div>
+    <div class="field-group"><label for="login-senha">Senha</label><input id="login-senha" class="input-ln" type="password" autocomplete="current-password" required></div>
+    <div id="login-error"></div>
+    <button id="login-submit" type="submit">Entrar no sistema</button>
+  </form>
+</div>
+
+
+  <header class="navbar">
+    <div class="nav-content">
+      <div class="nav-left">
+        <img src="data:image/png;base64,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" alt="Tekno Engenharia" class="nav-logo">
+        <div class="search-box">
+          <input type="text" id="campo-busca" placeholder="Pesquisar Nº OC, Pedido, Material, Descrição ou Link..." oninput="renderizarFeed()">
+        </div>
+      </div>
+      <nav class="nav-menu">
+        <button type="button" id="tab-todos" class="nav-btn active" onclick="mudarFiltro('TODOS')">Todas as OCs</button>
+        <button type="button" id="tab-pendente" class="nav-btn" onclick="mudarFiltro('PENDENTE')">Pendentes</button>
+        <button type="button" id="tab-comprado" class="nav-btn" onclick="mudarFiltro('COMPRADO')">Comprados</button>
+        <div class="auth-actions">
+          <span id="auth-user" class="auth-user"></span>
+          <button type="button" id="btn-admin" class="nav-btn" style="display:none" onclick="abrirAdminUsuarios()">Usuários</button>
+          <button type="button" id="btn-logout" class="nav-btn" onclick="fazerLogout()">Sair</button>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main-grid">
+    <!-- Esquerda: Perfil -->
+    <aside>
+      <div class="card">
+        <div class="profile-banner"></div>
+        <div class="profile-info">
+          <div class="profile-avatar">WB</div>
+          <div class="profile-name" id="profile-name">Welliton Barbio</div>
+          <div class="profile-role">Gestão de Compras &amp; OCs<br>Tekno Engenharia</div>
+        </div>
+        <div class="profile-stats">
+          <div class="stat-row">Total de OCs <span id="stat-total" style="color:#0f172a;">0</span></div>
+          <div class="stat-row">Pendentes <span id="stat-pendentes" class="badge-pend">0</span></div>
+          <div class="stat-row">Compradas <span id="stat-comprados" class="badge-comp">0</span></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Centro: Cadastro e Lista -->
+    <section>
+      <div class="card post-box">
+        <div class="post-box-title">&#10133; Cadastrar Nova OC, Materiais, Links e Orçamentos</div>
+        
+        <!-- Passo 1: Dados da OC -->
+        <div class="step-box">
+          <span class="step-title">1. Dados da OC e Pedido</span>
+          <div class="grid-3">
+            <div class="field-group">
+              <label>Nº da OC *</label>
+              <input type="text" id="num-oc" class="input-ln" placeholder="Ex: OC-1045">
+            </div>
+            <div class="field-group">
+              <label>Nº do Pedido *</label>
+              <input type="text" id="num-pedido" class="input-ln" placeholder="Ex: PED-889">
+            </div>
+            <div class="field-group">
+              <label>Status Inicial</label>
+              <select id="status-inicial" class="input-ln">
+                <option value="PENDENTE">Pendente</option>
+                <option value="COMPRADO">Comprado</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-group" style="margin-top:10px;">
+            <label>Descrição / Observação da OC (Opcional)</label>
+            <input type="text" id="desc-oc" class="input-ln" placeholder="Ex: Materiais elétricos para obra Centro / Urgente">
+          </div>
+        </div>
+
+        <!-- Passo 2: Adicionar Materiais, Links e Imagem do Orçamento -->
+        <div class="step-box">
+          <span class="step-title">2. Adicionar Materiais, Links e Imagem do Orçamento</span>
+          <div class="grid-mat-top">
+            <div class="field-group">
+              <label>Nome do Material *</label>
+              <input type="text" id="mat-nome" class="input-ln" placeholder="Ex: Cabo 2,5mm">
+            </div>
+            <div class="field-group">
+              <label>Quantidade *</label>
+              <input type="text" id="mat-qtd" class="input-ln" placeholder="Ex: 10 un">
+            </div>
+            <div class="field-group">
+              <label>Link do Produto/Cotação *</label>
+              <input type="text" id="mat-link" class="input-ln" placeholder="Cole o link aqui">
+            </div>
+          </div>
+          
+          <div class="grid-mat-bot">
+            <div class="field-group">
+              <label>Orçamento em Imagem (Print/Foto PNG ou JPG - Opcional)</label>
+              <label class="file-upload-box">
+                <span class="file-upload-btn">&#128247; Anexar Imagem do Orçamento</span>
+                <span id="nome-arquivo-orc" class="file-upload-name">Nenhuma imagem selecionada</span>
+                <input type="file" id="mat-img-input" accept="image/*" style="display:none;" onchange="processarImagemOrcamento(event)">
+              </label>
+            </div>
+            <button type="button" class="btn-add-item" onclick="incluirMaterialNaLista()">+ Incluir Item</button>
+          </div>
+
+          <div id="lista-previa-materiais" class="preview-lista"></div>
+        </div>
+
+        <!-- Passo 3: Salvar Tudo -->
+        <button type="button" class="btn-publish" onclick="salvarOCDefinitiva()">&#10004; Salvar OC Completa no Sistema</button>
+      </div>
+
+      <div id="feed-container"></div>
+    </section>
+
+    <!-- Direita: Backup -->
+    <aside class="sidebar-right">
+      <div class="card widget">
+        <h3>Backup e Compartilhamento</h3>
+        <p>Salve uma cópia completa (incluindo os links e imagens de orçamento) para guardar ou enviar a outro PC.</p>
+        <button type="button" class="btn-side btn-side-green" onclick="baixarBackup()">Baixar Backup (.json)</button>
+        <label class="btn-side btn-side-outline" style="cursor:pointer;">
+          Carregar Backup (.json)
+          <input type="file" accept=".json" style="display:none;" onchange="carregarBackup(event)">
+        </label>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Modal para Ampliar Imagem do Orçamento -->
+  <div id="modal-orcamento" class="modal-overlay" onclick="fecharModalFora(event)">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-titulo">Orçamento do Material</h3>
+        <button type="button" class="modal-close" onclick="fecharModalOrcamento()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <img id="modal-imagem" src="" alt="Orçamento">
+      </div>
+      <div class="modal-footer">
+        <a id="modal-download" href="" download="Orcamento_Tekno.jpg" class="btn-download-img">&#11015; Baixar Imagem</a>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <img src="data:image/png;base64,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" alt="Tekno Engenharia" style="height:32px;border-radius:4px;">
+      <div>Portal Corporativo de OCs, Materiais e Orçamentos &bull; <strong>Tekno Engenharia</strong></div>
+      <div>Criado e desenvolvido por <strong>Welliton Barbio</strong></div>
+    </div>
+  </footer>
+
+  
+<div id="admin-modal" class="admin-modal" onclick="if(event.target===this)fecharAdminUsuarios()">
+  <div class="admin-box">
+    <button class="admin-close" type="button" onclick="fecharAdminUsuarios()">Fechar</button>
+    <h2>Gerenciar usuários</h2>
+    <p style="font-size:13px;color:#64748b;">Cadastre usuários e senhas. Somente o administrador pode acessar esta área.</p>
+    <form class="admin-form" onsubmit="criarUsuario(event)">
+      <div class="field-group"><label for="novo-usuario">Novo usuário</label><input id="novo-usuario" class="input-ln" minlength="3" required></div>
+      <div class="field-group"><label for="nova-senha">Senha inicial</label><input id="nova-senha" class="input-ln" type="password" minlength="10" required></div>
+      <button class="btn-publish" type="submit">Criar usuário</button>
+    </form>
+    <div id="lista-usuarios">Carregando...</div>
+  </div>
+</div>
+
+  <div id="toast" class="toast">Link copiado!</div>
+
+<script>
+  var filtroAtual = 'TODOS';
+  var materiaisTemporarios = [];
+  var imagemAtualBase64 = '';
+  var listaOCs = [];
+
+  var API_BASE = 'https://teknocompras.joaocosta-tekno.workers.dev';
+  var tokenSessao = sessionStorage.getItem('tekno_token') || '';
+  var usuarioLogado = null;
+  var shaOCs = null;
+  var timerSalvar = null;
+  var sincronizando = false;
+  var alteracoesPendentes = false;
+
+  async function apiRequest(path, options) {
+    options = options || {};
+    options.headers = Object.assign({'Content-Type':'application/json'}, options.headers || {});
+    if (tokenSessao) options.headers.Authorization = 'Bearer ' + tokenSessao;
+    var resposta = await fetch(API_BASE + path, options);
+    var dados = {};
+    try { dados = await resposta.json(); } catch(e) {}
+    if (!resposta.ok) throw new Error(dados.error || ('Erro HTTP ' + resposta.status));
+    return dados;
+  }
+
+  async function fazerLogin(event) {
+    event.preventDefault();
+    var botao = document.getElementById('login-submit');
+    var erro = document.getElementById('login-error');
+    botao.disabled = true; botao.textContent = 'Entrando...'; erro.textContent = '';
+    try {
+      var dados = await apiRequest('/api/login', {method:'POST', body:JSON.stringify({username:document.getElementById('login-usuario').value.trim(), password:document.getElementById('login-senha').value})});
+      tokenSessao = dados.token; sessionStorage.setItem('tekno_token', tokenSessao);
+      usuarioLogado = dados.user;
+      await carregarDadosIniciais();
+      document.body.classList.add('autenticado');
+      document.getElementById('auth-user').textContent = usuarioLogado.username;
+      document.getElementById('btn-admin').style.display = usuarioLogado.role === 'admin' ? '' : 'none';
+      document.getElementById('profile-name').textContent = usuarioLogado.username;
+      iniciarSincronizacao();
+    } catch(e) { erro.textContent = e.message || 'Não foi possível entrar.'; }
+    finally { botao.disabled = false; botao.textContent = 'Entrar no sistema'; }
+  }
+
+  async function fazerLogout() {
+    try { await apiRequest('/api/logout', {method:'POST',body:'{}'}); } catch(e) {}
+    tokenSessao = ''; usuarioLogado = null; sessionStorage.removeItem('tekno_token');
+    document.body.classList.remove('autenticado');
+    document.getElementById('login-senha').value = '';
+    if (window.timerSync) clearInterval(window.timerSync);
+  }
+
+  async function carregarDadosIniciais() {
+    var dados = await apiRequest('/api/ocs');
+    listaOCs = Array.isArray(dados.ocs) ? dados.ocs : [];
+    shaOCs = dados.sha || null;
+    desenharPreviaMateriais(); renderizarFeed();
+  }
+
+  function salvarNoNavegador() {
+    alteracoesPendentes = true;
+    clearTimeout(timerSalvar);
+    timerSalvar = setTimeout(salvarNoServidor, 600);
+  }
+
+  async function salvarNoServidor() {
+    if (!alteracoesPendentes || sincronizando || !tokenSessao) return;
+    sincronizando = true; alteracoesPendentes = false;
+    try {
+      var dados = await apiRequest('/api/ocs', {method:'PUT', body:JSON.stringify({ocs:listaOCs, baseSha:shaOCs})});
+      shaOCs = dados.sha || shaOCs;
+    } catch(e) {
+      alteracoesPendentes = true;
+      if (e.message.indexOf('CONFLICT') !== -1) {
+        alert('Outra pessoa alterou os dados ao mesmo tempo. O sistema vai atualizar a lista; confira sua última alteração antes de repetir.');
+        try { await carregarDadosIniciais(); alteracoesPendentes = false; } catch(err) {}
+      } else { alert('Não foi possível sincronizar: ' + e.message + '. Verifique a conexão.'); }
+    } finally { sincronizando = false; }
+  }
+
+  async function sincronizarComServidor() {
+    if (!tokenSessao || sincronizando || alteracoesPendentes) return;
+    try {
+      var dados = await apiRequest('/api/ocs');
+      if (dados.sha && dados.sha !== shaOCs) {
+        listaOCs = Array.isArray(dados.ocs) ? dados.ocs : [];
+        shaOCs = dados.sha; renderizarFeed();
+      }
+    } catch(e) {
+      if (e.message.toLowerCase().includes('sess')) fazerLogout();
+    }
+  }
+
+  function iniciarSincronizacao() {
+    if (window.timerSync) clearInterval(window.timerSync);
+    window.timerSync = setInterval(sincronizarComServidor, 15000);
+  }
+
+  async function abrirAdminUsuarios() {
+    document.getElementById('admin-modal').classList.add('open');
+    await listarUsuarios();
+  }
+  function fecharAdminUsuarios() { document.getElementById('admin-modal').classList.remove('open'); }
+  async function listarUsuarios() {
+    var box = document.getElementById('lista-usuarios'); box.textContent = 'Carregando...';
+    try {
+      var dados = await apiRequest('/api/users'); box.innerHTML = '';
+      dados.users.forEach(function(u) {
+        var linha = document.createElement('div'); linha.className = 'admin-user-row';
+        var info = document.createElement('span'); info.textContent = u.username + ' — ' + (u.role === 'admin' ? 'Administrador' : 'Usuário') + ' — ' + (u.active ? 'Ativo' : 'Bloqueado');
+        var botao = document.createElement('button'); botao.textContent = u.role === 'admin' ? 'Administrador' : (u.active ? 'Bloquear' : 'Reativar');
+        botao.disabled = u.role === 'admin'; botao.onclick = function(){ alterarEstadoUsuario(u.username, !u.active); };
+        linha.appendChild(info); linha.appendChild(botao); box.appendChild(linha);
+      });
+    } catch(e) { box.textContent = e.message; }
+  }
+  async function criarUsuario(event) {
+    event.preventDefault();
+    var username = document.getElementById('novo-usuario').value.trim();
+    var password = document.getElementById('nova-senha').value;
+    try { await apiRequest('/api/users', {method:'POST',body:JSON.stringify({username,password})});
+      document.getElementById('novo-usuario').value=''; document.getElementById('nova-senha').value=''; await listarUsuarios(); alert('Usuário criado.');
+    } catch(e) { alert(e.message); }
+  }
+  async function alterarEstadoUsuario(username, active) {
+    try { await apiRequest('/api/users/' + encodeURIComponent(username), {method:'PATCH',body:JSON.stringify({active})}); await listarUsuarios(); }
+    catch(e) { alert(e.message); }
+  }
+
+  function formatarUrl(u) {
+    u = (u || '').trim();
+    if (!u) return '#';
+    if (!/^https?:\/\//i.test(u)) {
+      return 'https://' + u;
+    }
+    return u;
+  }
+
+  function escaparHtml(texto) {
+    return String(texto || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function processarImagemOrcamento(event) {
+    var file = event.target.files[0];
+    if (!file) {
+      imagemAtualBase64 = '';
+      document.getElementById('nome-arquivo-orc').textContent = 'Nenhuma imagem selecionada';
+      return;
+    }
+
+    document.getElementById('nome-arquivo-orc').textContent = 'Processando: ' + file.name + '...';
+
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var img = new Image();
+      img.onload = function() {
+        var canvas = document.createElement('canvas');
+        var maxW = 1100;
+        var scale = (img.width > maxW) ? (maxW / img.width) : 1;
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        imagemAtualBase64 = canvas.toDataURL('image/jpeg', 0.80);
+        document.getElementById('nome-arquivo-orc').textContent = file.name + ' (Pronto!)';
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function incluirMaterialNaLista() {
+    var nome = document.getElementById('mat-nome').value.trim();
+    var qtd = document.getElementById('mat-qtd').value.trim();
+    var link = document.getElementById('mat-link').value.trim();
+
+    if (!nome) {
+      alert('Digite o Nome do Material.');
+      document.getElementById('mat-nome').focus();
+      return;
+    }
+    if (!qtd) {
+      alert('Digite a Quantidade a ser comprada.');
+      document.getElementById('mat-qtd').focus();
+      return;
+    }
+    if (!link) {
+      alert('Cole o Link do material ou cotação.');
+      document.getElementById('mat-link').focus();
+      return;
+    }
+
+    materiaisTemporarios.push({
+      nome: nome,
+      qtd: qtd,
+      urlExibicao: link,
+      url: formatarUrl(link),
+      imagemOrcamento: imagemAtualBase64
+    });
+
+    document.getElementById('mat-nome').value = '';
+    document.getElementById('mat-qtd').value = '';
+    document.getElementById('mat-link').value = '';
+    document.getElementById('mat-img-input').value = '';
+    document.getElementById('nome-arquivo-orc').textContent = 'Nenhuma imagem selecionada';
+    imagemAtualBase64 = '';
+    document.getElementById('mat-nome').focus();
+
+    desenharPreviaMateriais();
+  }
+
+  function removerMaterialTemporario(indice) {
+    materiaisTemporarios.splice(indice, 1);
+    desenharPreviaMateriais();
+  }
+
+  function desenharPreviaMateriais() {
+    var box = document.getElementById('lista-previa-materiais');
+    box.innerHTML = '';
+
+    if (materiaisTemporarios.length === 0) {
+      box.innerHTML = `<div style="font-size:12px;color:#64748b;padding:4px;">Nenhum material adicionado ainda. Preencha os campos acima e clique em <b>+ Incluir Item</b>.</div>`;
+      return;
+    }
+
+    for (var i = 0; i < materiaisTemporarios.length; i++) {
+      var m = materiaisTemporarios[i];
+      var thumbHtml = m.imagemOrcamento
+        ? `<img src="${m.imagemOrcamento}" class="preview-thumb" alt="Orçamento"> <span class="badge-orc-ok">&#128247; Orçamento anexado</span>`
+        : '';
+      var div = document.createElement('div');
+      div.className = 'preview-item';
+      div.innerHTML = `
+        <div class="preview-left">
+          ${thumbHtml}
+          <div><strong>${i + 1}. ${escaparHtml(m.nome)}</strong> <span>(Qtd: ${escaparHtml(m.qtd)})</span> &mdash; <span style="color:#2563eb;">${escaparHtml(m.urlExibicao)}</span></div>
+        </div>
+        <button type="button" class="btn-rem-prev" onclick="removerMaterialTemporario(${i})">Remover</button>
+      `;
+      box.appendChild(div);
+    }
+  }
+
+  function salvarOCDefinitiva() {
+    var oc = document.getElementById('num-oc').value.trim();
+    var pedido = document.getElementById('num-pedido').value.trim();
+    var status = document.getElementById('status-inicial').value;
+    var desc = document.getElementById('desc-oc').value.trim();
+
+    if (!oc) {
+      alert('Por favor, preencha o Nº da OC.');
+      document.getElementById('num-oc').focus();
+      return;
+    }
+    if (!pedido) {
+      alert('Por favor, preencha o Nº do Pedido.');
+      document.getElementById('num-pedido').focus();
+      return;
+    }
+
+    var nomePendente = document.getElementById('mat-nome').value.trim();
+    var qtdPendente = document.getElementById('mat-qtd').value.trim();
+    var linkPendente = document.getElementById('mat-link').value.trim();
+    if (nomePendente && qtdPendente && linkPendente) {
+      materiaisTemporarios.push({
+        nome: nomePendente,
+        qtd: qtdPendente,
+        urlExibicao: linkPendente,
+        url: formatarUrl(linkPendente),
+        imagemOrcamento: imagemAtualBase64
+      });
+    }
+
+    if (materiaisTemporarios.length === 0) {
+      alert('Adicione pelo menos 1 material com quantidade e link antes de salvar a OC.');
+      return;
+    }
+
+    var agora = new Date();
+    var dataStr = agora.toLocaleDateString('pt-BR') + ' às ' + agora.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+
+    var novaOC = {
+      id: Date.now(),
+      oc: oc,
+      pedido: pedido,
+      descricao: desc,
+      status: status,
+      data: dataStr,
+      materiais: materiaisTemporarios.slice()
+    };
+
+    listaOCs.unshift(novaOC);
+    salvarNoNavegador();
+
+    document.getElementById('num-oc').value = '';
+    document.getElementById('num-pedido').value = '';
+    document.getElementById('desc-oc').value = '';
+    document.getElementById('status-inicial').value = 'PENDENTE';
+    document.getElementById('mat-nome').value = '';
+    document.getElementById('mat-qtd').value = '';
+    document.getElementById('mat-link').value = '';
+    document.getElementById('mat-img-input').value = '';
+    document.getElementById('nome-arquivo-orc').textContent = 'Nenhuma imagem selecionada';
+    imagemAtualBase64 = '';
+    materiaisTemporarios = [];
+
+    desenharPreviaMateriais();
+    renderizarFeed();
+  }
+
+  function mudarFiltro(novoFiltro) {
+    filtroAtual = novoFiltro;
+    document.getElementById('tab-todos').className = (novoFiltro === 'TODOS') ? 'nav-btn active' : 'nav-btn';
+    document.getElementById('tab-pendente').className = (novoFiltro === 'PENDENTE') ? 'nav-btn active' : 'nav-btn';
+    document.getElementById('tab-comprado').className = (novoFiltro === 'COMPRADO') ? 'nav-btn active' : 'nav-btn';
+    renderizarFeed();
+  }
+
+  function alternarStatusOC(id) {
+    for (var i = 0; i < listaOCs.length; i++) {
+      if (listaOCs[i].id === id) {
+        listaOCs[i].status = (listaOCs[i].status === 'PENDENTE') ? 'COMPRADO' : 'PENDENTE';
+        break;
+      }
+    }
+    salvarNoNavegador();
+    renderizarFeed();
+  }
+
+  function excluirOC(id) {
+    if (confirm('Deseja excluir esta OC e todos os seus materiais?')) {
+      listaOCs = listaOCs.filter(function(item) { return item.id !== id; });
+      salvarNoNavegador();
+      renderizarFeed();
+    }
+  }
+
+  function abrirModalOrcamento(ocId, matIdx) {
+    for (var i = 0; i < listaOCs.length; i++) {
+      if (listaOCs[i].id === ocId && listaOCs[i].materiais[matIdx]) {
+        var mat = listaOCs[i].materiais[matIdx];
+        if (!mat.imagemOrcamento) return;
+        document.getElementById('modal-titulo').textContent = `Orçamento: ${mat.nome} (${listaOCs[i].oc})`;
+        document.getElementById('modal-imagem').src = mat.imagemOrcamento;
+        document.getElementById('modal-download').href = mat.imagemOrcamento;
+        document.getElementById('modal-download').download = `Orcamento_${listaOCs[i].oc}_${mat.nome}.jpg`;
+        document.getElementById('modal-orcamento').style.display = 'flex';
+        break;
+      }
+    }
+  }
+
+  function fecharModalOrcamento() {
+    document.getElementById('modal-orcamento').style.display = 'none';
+  }
+
+  function fecharModalFora(event) {
+    if (event.target.id === 'modal-orcamento') {
+      fecharModalOrcamento();
+    }
+  }
+
+  function copiarUrlPorIndice(ocId, matIdx) {
+    var urlParaCopiar = '';
+    for (var i = 0; i < listaOCs.length; i++) {
+      if (listaOCs[i].id === ocId && listaOCs[i].materiais[matIdx]) {
+        urlParaCopiar = listaOCs[i].materiais[matIdx].url;
+        break;
+      }
+    }
+    if (!urlParaCopiar) return;
+
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(urlParaCopiar);
+    } else {
+      var temp = document.createElement('input');
+      document.body.appendChild(temp);
+      temp.value = urlParaCopiar;
+      temp.select();
+      document.execCommand('copy');
+      document.body.removeChild(temp);
+    }
+    var toast = document.getElementById('toast');
+    toast.style.display = 'block';
+    setTimeout(function() { toast.style.display = 'none'; }, 2000);
+  }
+
+  function baixarBackup() {
+    var dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(listaOCs, null, 2));
+    var a = document.createElement('a');
+    a.href = dataStr;
+    a.download = 'Tekno_OCs_Orcamentos_Backup.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  function carregarBackup(event) {
+    var file = event.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        var dados = JSON.parse(e.target.result);
+        if (Array.isArray(dados)) {
+          listaOCs = dados;
+          salvarNoNavegador();
+          renderizarFeed();
+          alert('Backup carregado com sucesso!');
+        } else {
+          alert('Arquivo inválido.');
+        }
+      } catch (err) {
+        alert('Erro ao ler o arquivo.');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  function renderizarFeed() {
+    var termo = document.getElementById('campo-busca').value.toLowerCase().trim();
+    var container = document.getElementById('feed-container');
+    container.innerHTML = '';
+
+    var pendentes = 0, comprados = 0;
+    for (var i = 0; i < listaOCs.length; i++) {
+      if (listaOCs[i].status === 'PENDENTE') pendentes++;
+      else comprados++;
+    }
+
+    document.getElementById('stat-total').textContent = listaOCs.length;
+    document.getElementById('stat-pendentes').textContent = pendentes;
+    document.getElementById('stat-comprados').textContent = comprados;
+
+    var filtradas = listaOCs.filter(function(item) {
+      var bateStatus = (filtroAtual === 'TODOS' || item.status === filtroAtual);
+      if (!bateStatus) return false;
+      if (!termo) return true;
+
+      var bateCab = item.oc.toLowerCase().indexOf(termo) !== -1 ||
+                    item.pedido.toLowerCase().indexOf(termo) !== -1 ||
+                    (item.descricao && item.descricao.toLowerCase().indexOf(termo) !== -1);
+      var bateMat = false;
+      if (item.materiais) {
+        for (var j = 0; j < item.materiais.length; j++) {
+          var m = item.materiais[j];
+          if (m.nome.toLowerCase().indexOf(termo) !== -1 ||
+              m.qtd.toLowerCase().indexOf(termo) !== -1 ||
+              m.urlExibicao.toLowerCase().indexOf(termo) !== -1) {
+            bateMat = true;
+            break;
+          }
+        }
+      }
+      return bateCab || bateMat;
+    });
+
+    if (filtradas.length === 0) {
+      container.innerHTML = `<div class="card" style="padding:28px;text-align:center;color:#64748b;">Nenhuma OC encontrada. Preencha os dados acima e clique em <b>Salvar OC Completa no Sistema</b>.</div>`;
+      return;
+    }
+
+    for (var k = 0; k < filtradas.length; k++) {
+      var ocItem = filtradas[k];
+      var isPend = (ocItem.status === 'PENDENTE');
+
+      var card = document.createElement('div');
+      card.className = 'card oc-card ' + (isPend ? 'status-pendente' : 'status-comprado');
+
+      var htmlObs = ocItem.descricao ? `<div class="oc-obs"><strong>Descrição / Obs:</strong> ${escaparHtml(ocItem.descricao)}</div>` : '';
+
+      var htmlMateriais = '<div class="lista-materiais-oc">';
+      if (ocItem.materiais && ocItem.materiais.length > 0) {
+        for (var mIdx = 0; mIdx < ocItem.materiais.length; mIdx++) {
+          var mat = ocItem.materiais[mIdx];
+          var temImagem = !!mat.imagemOrcamento;
+          var thumbCard = temImagem
+            ? `<img src="${mat.imagemOrcamento}" class="item-mat-thumb" title="Clique para ampliar orçamento" onclick="abrirModalOrcamento(${ocItem.id}, ${mIdx})">`
+            : '';
+          var btnVerOrc = temImagem
+            ? `<button type="button" class="btn-ver-orc" onclick="abrirModalOrcamento(${ocItem.id}, ${mIdx})">&#128247; Ver Orçamento</button>`
+            : '';
+
+          htmlMateriais += `
+            <div class="item-mat-row">
+              <div class="item-mat-left">
+                ${thumbCard}
+                <div class="item-mat-info">
+                  <div class="item-mat-nome">${mIdx + 1}. ${escaparHtml(mat.nome)}</div>
+                  <span class="item-mat-qtd">Quantidade: ${escaparHtml(mat.qtd)}</span>
+                  <div class="item-mat-url">${escaparHtml(mat.urlExibicao)}</div>
+                </div>
+              </div>
+              <div class="item-mat-btns">
+                ${btnVerOrc}
+                <a href="${escaparHtml(mat.url)}" target="_blank" class="btn-abrir">Abrir Link &#8599;</a>
+                <button type="button" class="btn-copiar" onclick="copiarUrlPorIndice(${ocItem.id}, ${mIdx})">Copiar</button>
+              </div>
+            </div>
+          `;
+        }
+      }
+      htmlMateriais += '</div>';
+
+      var btnToggleTexto = isPend ? '&#9989; Marcar OC como Comprada' : '&#9203; Voltar OC para Pendente';
+      var btnToggleClass = isPend ? 'btn-to-comprado' : 'btn-to-pendente';
+
+      card.innerHTML = `
+        <div class="oc-header">
+          <div class="oc-badges">
+            <span class="tag-oc">OC: ${escaparHtml(ocItem.oc)}</span>
+            <span class="tag-pedido">Pedido: ${escaparHtml(ocItem.pedido)}</span>
+            <span class="tag-data">Salvo em ${escaparHtml(ocItem.data)}</span>
+          </div>
+          <span class="status-pill ${isPend ? 'pill-pendente' : 'pill-comprado'}">${ocItem.status}</span>
+        </div>
+        ${htmlObs}
+        ${htmlMateriais}
+        <div class="oc-footer">
+          <button type="button" class="btn-status-toggle ${btnToggleClass}" onclick="alternarStatusOC(${ocItem.id})">${btnToggleTexto}</button>
+          <button type="button" class="btn-excluir-oc" onclick="excluirOC(${ocItem.id})">Excluir OC</button>
+        </div>
+      `;
+
+      container.appendChild(card);
+    }
+  }
+
+  (async function iniciar() {
+    if (!API_BASE.startsWith('https://') || API_BASE.includes('COLE-A-URL')) {
+      document.getElementById('login-error').textContent = 'O administrador precisa configurar a URL da API no arquivo index.html.';
+      return;
+    }
+    if (tokenSessao) {
+      try {
+        var sessao = await apiRequest('/api/me'); usuarioLogado = sessao.user;
+        await carregarDadosIniciais();
+        document.body.classList.add('autenticado');
+        document.getElementById('auth-user').textContent = usuarioLogado.username;
+        document.getElementById('btn-admin').style.display = usuarioLogado.role === 'admin' ? '' : 'none';
+        document.getElementById('profile-name').textContent = usuarioLogado.username;
+        iniciarSincronizacao();
+      } catch(e) { sessionStorage.removeItem('tekno_token'); tokenSessao = ''; }
+    }
+  })();
+</script>
+</body>
+</html>
